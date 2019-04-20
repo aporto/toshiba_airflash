@@ -37,7 +37,7 @@ def download_file(filename):
     except:
         pass
 
-    with open (os.path.join(PICTURE_PATH, filename), 'wb') as f:
+    with open (os.path.join(picture_path, filename), 'wb') as f:
         f.write(downloaded_data)
     print "Done"
 
