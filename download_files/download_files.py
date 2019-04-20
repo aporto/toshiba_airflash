@@ -26,10 +26,22 @@ UPDATE_TIME_SECONDS = 10 # Wait this amount of time between each check
 #-------------------------------------------------------------------------------
 
 def download_file(filename):
-    print "\tDownloading", filename, "...",
+    print "\tDownloading", filename, "  0%",
     url = 'http://%s/%s/%s' % (IP_ADDRESS, DOWNLOAD_PATH, filename)
     urlconn = urllib2.urlopen(url)
-    downloaded_data = urlconn.read()
+    total_size = int(urlconn.info().getheader('Content-Length').strip())
+    bytes_so_far = 0
+    downloaded_data = ''
+
+    while 1:
+        chunk = urlconn.read(8192)
+        bytes_so_far += len(chunk)
+        if not chunk:
+            break
+        print "\b\b\b\b\b% 3d%%" % (bytes_so_far * 100 / total_size),
+
+        downloaded_data += chunk
+
     path = os.path.dirname(__file__)
     picture_path = os.path.join(path, 'downloaded_files')
     try:
@@ -55,14 +67,21 @@ def update():
     ctime = datetime.datetime.now().strftime('%H:%M:%S')
     print '%s: Checking files in SD card via Wi-Fi...' % (ctime),
     url = 'http://%s/%s' % (IP_ADDRESS, DOWNLOAD_PATH)
+    url = 'http://%s/command.cgi?op=100&DIR=%s' % (IP_ADDRESS, DOWNLOAD_PATH)
+
     urlconn = urllib2.urlopen(url)
     downloaded_html = urlconn.read()
     downloaded_html = downloaded_html.split('\n')
     new_file = False
+    count = 0
     for line in downloaded_html:
-        if '"fname":"' in line:
-            filename = line[line.index('"fname":"')+9:]
-            filename = filename[:filename.index('"')]
+        #if '"fname":"' in line:
+            line = line.split(',')
+            if len(line) < 2:
+                continue
+            filename = line[1]
+            #filename = line[line.index('"fname":"')+9:]
+            #filename = filename[:filename.index('"')]
             if not filename in downloaded_list:
                 if new_file == False:
                     print ''
